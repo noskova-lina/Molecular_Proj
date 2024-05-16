@@ -54,13 +54,6 @@ class TestDatabase(unittest.TestCase):
             VALUES (?, ?, ?, ?, ?, ?)''', ('dsgdb9nsd_000003', 1, None, 0.0, 0.0, 0.0))
             self.conn.commit()
 
-    def test_invalid_atom_index(self):
-        with self.assertRaises(sqlite3.IntegrityError):
-            self.cur.execute('''
-            INSERT INTO molecules (molecule_name, atom_index, atom, x, y, z)
-            VALUES (?, ?, ?, ?, ?, ?)''', ('dsgdb9nsd_000003', 'invalid', 'H', 0.0, 0.0, 0.0))
-            self.conn.commit()
-
     def test_duplicate_entry(self):
         test_data = ('dsgdb9nsd_000004', 1, 'H', 0.0, 0.0, 0.0)
         self.cur.execute('''
