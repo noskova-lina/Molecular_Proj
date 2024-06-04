@@ -1,19 +1,54 @@
-import os
 import uvicorn
-from database import create_database, insert_xyz_data, view_table, delete_database
+from settings import directory_path
+from database import create_database, insert_xyz_data, insert_xyz_files, view_table, delete_database
+import logging
 
-db_path = 'xyz_molecules.db'
-# Absolute path to the directory with the current script (src)
-current_directory = os.path.dirname(os.path.abspath(__file__))
-# Path to the project root directory
-project_directory = os.path.dirname(current_directory)
-# Relative path to the data folder
-directory_path = os.path.join(project_directory, 'data', 'structures')
 
-# create_database(db_path)
-# insert_xyz_data(db_path, directory_path)
-# view_table(db_path)
-# delete_database(db_path)
+create_database()
+insert_xyz_data(directory_path)
+# view_table('dsgdb9nsd_000002')
+# delete_database()
 
 if __name__ == "__main__":
     uvicorn.run("api:app", host="0.0.0.0", port=8000, reload=True)
+
+
+def main():
+    logging.basicConfig(level=logging.INFO)
+
+    try:
+        create_database()
+        logging.info("Database created successfully.")
+    except Exception as e:
+        logging.error(f"Failed to create database: {str(e)}")
+
+    file_paths = [
+        '../data/sample.xyz',
+        '../data/sample_2.xyz'
+    ]
+
+    try:
+        insert_xyz_files(file_paths)
+        logging.info("Files inserted into the database.")
+    except Exception as e:
+        logging.error(f"Failed to insert files: {str(e)}")
+
+    try:
+        data = view_table('sample')
+        if data:
+            logging.info("Data retrieved successfully.")
+            for row in data:
+                print(row)
+        else:
+            logging.error("Molecule not found.")
+    except Exception as e:
+        logging.error(f"Failed to retrieve data: {str(e)}")
+
+    try:
+        delete_database()
+        logging.info("Database deleted successfully.")
+    except Exception as e:
+        logging.error(f"Failed to delete database: {str(e)}")
+
+# if __name__ == "__main__":
+#     main()
