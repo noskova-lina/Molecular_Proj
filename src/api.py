@@ -1,5 +1,5 @@
 from fastapi import FastAPI, HTTPException, Query, Body
-from settings import directory_path
+from settings import zip_file_path
 from database import insert_xyz_file, insert_xyz_files, insert_xyz_data, view_table, get_xyz_data, xyz_to_rdkit_molecule
 from pydantic import BaseModel
 from typing import Optional
@@ -11,8 +11,8 @@ from src.database import (
     get_scalar_coupling_contributions,
     get_scalar_coupling_constants,
     get_molecule_data,
-    insert_scalar_coupling_contributions_from_csv,
-    insert_scalar_coupling_constants_from_csv,
+    insert_scalar_coupling_contributions_from_zip,
+    insert_scalar_coupling_constants_from_zip,
     get_data_by_atom_index_and_type,
     get_molecules_by_atom,
     get_molecules_by_coordinate_range,
@@ -39,7 +39,7 @@ def read_root():
 @app.post("/insert-data/")
 def insert_data():
     try:
-        insert_xyz_data(directory_path)
+        insert_xyz_data(zip_file_path)
         return {"message": "Data inserted successfully"}
     except FileNotFoundError:
         raise HTTPException(status_code=404, detail="Directory not found")
@@ -72,7 +72,7 @@ def insert_files(xyz_file_paths: list[str] = Body(...)):
 @app.post("/insert-scalar-coupling-constants-file/")
 def insert_scalar_coupling_constants_file(file_path: str = Body(..., embed=True)):
     try:
-        insert_scalar_coupling_constants_from_csv(file_path)
+        insert_scalar_coupling_constants_from_zip(file_path)
         return {"message": "Scalar coupling constants inserted successfully from file"}
     except FileNotFoundError:
         raise HTTPException(status_code=404, detail=f"File {file_path} not found")
@@ -83,7 +83,7 @@ def insert_scalar_coupling_constants_file(file_path: str = Body(..., embed=True)
 @app.post("/insert-scalar-coupling-contributions-file/")
 def insert_scalar_coupling_contributions_file(file_path: str = Body(..., embed=True)):
     try:
-        insert_scalar_coupling_contributions_from_csv(file_path)
+        insert_scalar_coupling_contributions_from_zip(file_path)
         return {"message": "Scalar coupling contributions inserted successfully from file"}
     except FileNotFoundError:
         raise HTTPException(status_code=404, detail=f"File {file_path} not found")

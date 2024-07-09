@@ -1,7 +1,8 @@
+import csv
 import sqlite3
 import os
-import glob
 import logging
+import zipfile
 
 from rdkit import Chem
 from rdkit.Geometry import Point3D
@@ -83,21 +84,25 @@ def insert_xyz_files(file_paths):
         insert_xyz_file(xyz_file_path)
 
 
-def insert_xyz_data(directory_path):
+def insert_xyz_data(zip_file_path):
     conn = sqlite3.connect(db_path)
     cur = conn.cursor()
 
-    for xyz_file_path in sorted(glob.glob(os.path.join(directory_path, '*.xyz'))):
-        with open(xyz_file_path, 'r') as file:
-            lines = file.readlines()
-            molecule_name = os.path.basename(xyz_file_path).replace('.xyz', '')
-            for index, line in enumerate(lines[2:]):
-                parts = line.strip().split()
-                atom_type = parts[0]
-                x, y, z = map(float, parts[1:])
-                cur.execute(
-                    'INSERT INTO molecules (molecule_name, atom_index, atom, x, y, z) VALUES (?, ?, ?, ?, ?, ?)',
-                    (molecule_name, index, atom_type, x, y, z))
+    with zipfile.ZipFile(zip_file_path, 'r') as zip_ref:
+        # List all the files in the zip archive
+        xyz_files = [f for f in zip_ref.namelist() if f.endswith('.xyz')]
+
+        for xyz_file_name in sorted(xyz_files):
+            with zip_ref.open(xyz_file_name) as file:
+                lines = file.readlines()
+                molecule_name = os.path.basename(xyz_file_name).replace('.xyz', '')
+                for index, line in enumerate(lines[2:]):
+                    parts = line.decode('utf-8').strip().split()
+                    atom_type = parts[0]
+                    x, y, z = map(float, parts[1:])
+                    cur.execute(
+                        'INSERT INTO molecules (molecule_name, atom_index, atom, x, y, z) VALUES (?, ?, ?, ?, ?, ?)',
+                        (molecule_name, index, atom_type, x, y, z))
 
     conn.commit()
     conn.close()
@@ -137,51 +142,59 @@ def get_molecule_data(molecule_name):
     return rows
 
 
-def insert_scalar_coupling_constants_from_csv(file_path: str):
-    import csv
+def insert_scalar_coupling_constants_from_zip(zip_file_scalar_coupling_path: str):
     conn = sqlite3.connect(db_path)
     cur = conn.cursor()
 
-    with open(file_path, newline='', encoding='utf-8') as csvfile:
-        reader = csv.DictReader(csvfile)
-        for row in reader:
-            cur.execute('''
-            INSERT INTO scalar_coupling_constants (id, molecule_name, atom_index_0, atom_index_1, type, scalar_coupling_constant)
-            VALUES (?, ?, ?, ?, ?, ?)
-            ''', (
-                row['id'],
-                row['molecule_name'],
-                row['atom_index_0'],
-                row['atom_index_1'],
-                row['type'],
-                row['scalar_coupling_constant']
-            ))
+    with zipfile.ZipFile(zip_file_scalar_coupling_path, 'r') as zip_ref:
+        # List all the files in the zip archive
+        csv_files = [f for f in zip_ref.namelist() if f.endswith('.csv') and 'scalar_coupling_constants' in f]
+
+        for csv_file_name in csv_files:
+            with zip_ref.open(csv_file_name) as csvfile:
+                reader = csv.DictReader(csvfile.read().decode('utf-8').splitlines())
+                for row in reader:
+                    cur.execute('''
+                    INSERT INTO scalar_coupling_constants (id, molecule_name, atom_index_0, atom_index_1, type, scalar_coupling_constant)
+                    VALUES (?, ?, ?, ?, ?, ?)
+                    ''', (
+                        row['id'],
+                        row['molecule_name'],
+                        row['atom_index_0'],
+                        row['atom_index_1'],
+                        row['type'],
+                        row['scalar_coupling_constant']
+                    ))
 
     conn.commit()
     conn.close()
 
 
-def insert_scalar_coupling_contributions_from_csv(file_path: str):
-    import csv
+def insert_scalar_coupling_contributions_from_zip(zip_file_scalar_contributions_path: str):
     conn = sqlite3.connect(db_path)
     cur = conn.cursor()
 
-    with open(file_path, newline='', encoding='utf-8') as csvfile:
-        reader = csv.DictReader(csvfile)
-        for row in reader:
-            cur.execute('''
-            INSERT INTO scalar_coupling_contributions (molecule_name, atom_index_0, atom_index_1, type, fc, sd, pso, dso)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-            ''', (
-                row['molecule_name'],
-                row['atom_index_0'],
-                row['atom_index_1'],
-                row['type'],
-                row['fc'],
-                row['sd'],
-                row['pso'],
-                row['dso']
-            ))
+    with zipfile.ZipFile(zip_file_scalar_contributions_path, 'r') as zip_ref:
+        # List all the files in the zip archive
+        csv_files = [f for f in zip_ref.namelist() if f.endswith('.csv') and 'scalar_coupling_contributions' in f]
+
+        for csv_file_name in csv_files:
+            with zip_ref.open(csv_file_name) as csvfile:
+                reader = csv.DictReader(csvfile.read().decode('utf-8').splitlines())
+                for row in reader:
+                    cur.execute('''
+                    INSERT INTO scalar_coupling_contributions (molecule_name, atom_index_0, atom_index_1, type, fc, sd, pso, dso)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                    ''', (
+                        row['molecule_name'],
+                        row['atom_index_0'],
+                        row['atom_index_1'],
+                        row['type'],
+                        row['fc'],
+                        row['sd'],
+                        row['pso'],
+                        row['dso']
+                    ))
 
     conn.commit()
     conn.close()

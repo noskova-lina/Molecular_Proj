@@ -33,14 +33,14 @@ def test_insert_files():
 
 
 def test_insert_scalar_coupling_constants_file():
-    file_path = '../data/scalar_coupling_constants.csv'
+    file_path = '../data/scalar_coupling_constants.zip'
     response = requests.post(f'{BASE_URL}/insert-scalar-coupling-constants-file/', json={'file_path': file_path})
     assert response.status_code == 200, f"Expected status code 200 but got {response.status_code}. Response: {response.text}"
     assert response.json().get("message") == "Scalar coupling constants inserted successfully from file"
 
 
 def test_insert_scalar_coupling_contributions_file():
-    file_path = '../data/scalar_coupling_contributions.csv'
+    file_path = '../data/scalar_coupling_contributions.zip'
     response = requests.post(f'{BASE_URL}/insert-scalar-coupling-contributions-file/', json={'file_path': file_path})
     assert response.status_code == 200, f"Expected status code 200 but got {response.status_code}. Response: {response.text}"
     assert response.json().get("message") == "Scalar coupling contributions inserted successfully from file"
