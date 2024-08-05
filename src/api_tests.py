@@ -1,35 +1,20 @@
 import requests
-import time
 
 BASE_URL = "http://localhost:8000"
 
 
-def timing_decorator(func):
-    def wrapper(*args, **kwargs):
-        start_time = time.time()
-        result = func(*args, **kwargs)
-        end_time = time.time()
-        print(f"{func.__name__} executed in {end_time - start_time:.4f} seconds")
-        return result
-
-    return wrapper
-
-
-@timing_decorator
 def test_read_root():
     response = requests.get(f"{BASE_URL}/")
     assert response.status_code == 200, f"Expected status code 200 but got {response.status_code}. Response: {response.text}"
     assert response.json() == {"Hello": "Welcome to the Molecular Data API"}
 
 
-@timing_decorator
 def test_insert_data():
     response = requests.post(f'{BASE_URL}/insert-data/')
     assert response.status_code == 200, f"Expected status code 200 but got {response.status_code}. Response: {response.text}"
     assert response.json().get("message") == "Data inserted successfully"
 
 
-@timing_decorator
 def test_insert_file():
     file_path = '../data/structure_sample.xyz'
     response = requests.post(f'{BASE_URL}/insert-file/?xyz_file_path={file_path}')
@@ -37,7 +22,6 @@ def test_insert_file():
     assert response.json().get("message") == f"Data from {file_path} inserted successfully"
 
 
-@timing_decorator
 def test_insert_files():
     file_paths = [
         '../data/structure_sample_2.xyz',
@@ -48,7 +32,6 @@ def test_insert_files():
     assert response.json().get("message") == "Data from files inserted successfully"
 
 
-@timing_decorator
 def test_insert_scalar_coupling_constants_file():
     file_path = '../data/scalar_coupling_constants.zip'
     response = requests.post(f'{BASE_URL}/insert-scalar-coupling-constants-file/', json={'file_path': file_path})
@@ -56,7 +39,6 @@ def test_insert_scalar_coupling_constants_file():
     assert response.json().get("message") == "Scalar coupling constants inserted successfully from file"
 
 
-@timing_decorator
 def test_insert_scalar_coupling_contributions_file():
     file_path = '../data/scalar_coupling_contributions.zip'
     response = requests.post(f'{BASE_URL}/insert-scalar-coupling-contributions-file/', json={'file_path': file_path})
@@ -64,7 +46,6 @@ def test_insert_scalar_coupling_contributions_file():
     assert response.json().get("message") == "Scalar coupling contributions inserted successfully from file"
 
 
-@timing_decorator
 def test_view_data():
     molecule_name = 'structure_sample'
     response = requests.get(f'{BASE_URL}/view-data/?molecule_name={molecule_name}')
@@ -72,7 +53,6 @@ def test_view_data():
     assert response.json(), "Expected non-empty response"
 
 
-@timing_decorator
 def test_view_data_invalid_name():
     invalid_name = 'non_existent_molecule'
     response = requests.get(f'{BASE_URL}/view-data/?molecule_name={invalid_name}')
@@ -80,7 +60,6 @@ def test_view_data_invalid_name():
     assert response.json().get("detail") == f"Molecule '{invalid_name}' not found"
 
 
-@timing_decorator
 def test_get_molecule_data():
     molecule_name = 'dsgdb9nsd_000001'
     response = requests.get(f'{BASE_URL}/get-molecule-data/?molecule_name={molecule_name}')
@@ -88,7 +67,6 @@ def test_get_molecule_data():
     assert response.json(), "Expected non-empty response"
 
 
-@timing_decorator
 def test_get_scalar_coupling_constants():
     molecule_name = 'dsgdb9nsd_000001'
     response = requests.get(f'{BASE_URL}/get-scalar-coupling-constants/?molecule_name={molecule_name}')
@@ -96,7 +74,6 @@ def test_get_scalar_coupling_constants():
     assert response.json(), "Expected non-empty response"
 
 
-@timing_decorator
 def test_get_scalar_coupling_contributions():
     molecule_name = 'dsgdb9nsd_000001'
     response = requests.get(f'{BASE_URL}/get-scalar-coupling-contributions/?molecule_name={molecule_name}')
@@ -104,7 +81,6 @@ def test_get_scalar_coupling_contributions():
     assert response.json(), "Expected non-empty response"
 
 
-@timing_decorator
 def test_get_data_by_atom_index_and_type():
     molecule_name = 'dsgdb9nsd_000001'
     atom_index_0 = 1
@@ -116,7 +92,6 @@ def test_get_data_by_atom_index_and_type():
     assert response.json(), "Expected non-empty response"
 
 
-@timing_decorator
 def test_get_molecules_by_atom():
     atom = 'H'
     response = requests.get(f'{BASE_URL}/get-molecules-by-atom/?atom={atom}')
@@ -124,7 +99,6 @@ def test_get_molecules_by_atom():
     assert response.json(), "Expected non-empty response"
 
 
-@timing_decorator
 def test_get_molecules_by_coordinate_range():
     x_min, x_max = 0.0, 1.0
     y_min, y_max = 0.0, 1.0
@@ -135,7 +109,6 @@ def test_get_molecules_by_coordinate_range():
     assert response.json(), "Expected non-empty response"
 
 
-@timing_decorator
 def test_update_molecule_data():
     update_data = {
         'molecule_name': 'dsgdb9nsd_000001',
