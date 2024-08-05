@@ -89,7 +89,6 @@ def insert_xyz_data(zip_file_path):
     cur = conn.cursor()
 
     with zipfile.ZipFile(zip_file_path, 'r') as zip_ref:
-        # List all the files in the zip archive
         xyz_files = [f for f in zip_ref.namelist() if f.endswith('.xyz')]
 
         for xyz_file_name in sorted(xyz_files):
@@ -147,17 +146,15 @@ def insert_scalar_coupling_constants_from_zip(zip_file_scalar_coupling_path: str
     cur = conn.cursor()
 
     with zipfile.ZipFile(zip_file_scalar_coupling_path, 'r') as zip_ref:
-        # List all the files in the zip archive
         csv_files = [f for f in zip_ref.namelist() if f.endswith('.csv') and 'scalar_coupling_constants' in f]
 
         for csv_file_name in csv_files:
             with zip_ref.open(csv_file_name) as csvfile:
                 reader = csv.DictReader(csvfile.read().decode('utf-8').splitlines())
+
+                rows_to_insert = []
                 for row in reader:
-                    cur.execute('''
-                    INSERT INTO scalar_coupling_constants (id, molecule_name, atom_index_0, atom_index_1, type, scalar_coupling_constant)
-                    VALUES (?, ?, ?, ?, ?, ?)
-                    ''', (
+                    rows_to_insert.append((
                         row['id'],
                         row['molecule_name'],
                         row['atom_index_0'],
@@ -165,6 +162,13 @@ def insert_scalar_coupling_constants_from_zip(zip_file_scalar_coupling_path: str
                         row['type'],
                         row['scalar_coupling_constant']
                     ))
+
+                BATCH_SIZE = 1300
+                for i in range(0, len(rows_to_insert), BATCH_SIZE):
+                    cur.executemany('''
+                        INSERT INTO scalar_coupling_constants (id, molecule_name, atom_index_0, atom_index_1, type, scalar_coupling_constant)
+                        VALUES (?, ?, ?, ?, ?, ?)
+                    ''', rows_to_insert[i:i + BATCH_SIZE])
 
     conn.commit()
     conn.close()
@@ -175,17 +179,16 @@ def insert_scalar_coupling_contributions_from_zip(zip_file_scalar_contributions_
     cur = conn.cursor()
 
     with zipfile.ZipFile(zip_file_scalar_contributions_path, 'r') as zip_ref:
-        # List all the files in the zip archive
         csv_files = [f for f in zip_ref.namelist() if f.endswith('.csv') and 'scalar_coupling_contributions' in f]
 
         for csv_file_name in csv_files:
             with zip_ref.open(csv_file_name) as csvfile:
                 reader = csv.DictReader(csvfile.read().decode('utf-8').splitlines())
+
+                rows_to_insert = []
+
                 for row in reader:
-                    cur.execute('''
-                    INSERT INTO scalar_coupling_contributions (molecule_name, atom_index_0, atom_index_1, type, fc, sd, pso, dso)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                    ''', (
+                    rows_to_insert.append((
                         row['molecule_name'],
                         row['atom_index_0'],
                         row['atom_index_1'],
@@ -195,6 +198,13 @@ def insert_scalar_coupling_contributions_from_zip(zip_file_scalar_contributions_
                         row['pso'],
                         row['dso']
                     ))
+
+                BATCH_SIZE = 800
+                for i in range(0, len(rows_to_insert), BATCH_SIZE):
+                    cur.executemany('''
+                        INSERT INTO scalar_coupling_contributions (molecule_name, atom_index_0, atom_index_1, type, fc, sd, pso, dso)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                    ''', rows_to_insert[i:i + BATCH_SIZE])
 
     conn.commit()
     conn.close()
